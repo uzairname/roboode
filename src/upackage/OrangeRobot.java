@@ -52,7 +52,12 @@ public class OrangeRobot extends AdvancedRobot {
 		
 		turnGunRight(radarTurn);
 		
-//		System.out.println("shooting angle: " + convertToDegrees(findShootAngle(realA, L, convertToRadians(degreesO))));
+print();
+	}
+
+
+	private void print() {
+		//		System.out.println("shooting angle: " + convertToDegrees(findShootAngle(realA, L, convertToRadians(degreesO))));
 //		System.out.println("O radians " + convertToRadians(degreesO));
 //		System.out.println("actual a" + realA);
 //		System.out.println("s: "+s + " v: "+v + " L: "+L + " O deg: "+degreesO);
