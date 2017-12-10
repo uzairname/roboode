@@ -12,22 +12,23 @@ public class OrangeRobot extends AdvancedRobot {
 		setAdjustRadarForGunTurn(true);
 		setAdjustRadarForRobotTurn(true);
 
+		setColors();
+
+		while (true) {
+			setTurnRadarRight(Rules.RADAR_TURN_RATE);
+			execute();
+		}
+	}
+
+
+	private void setColors() {
 		setBodyColor(java.awt.Color.orange);
 		setGunColor(java.awt.Color.red);
 		setRadarColor(java.awt.Color.orange);
 		setBulletColor(java.awt.Color.lightGray);
 		setScanColor(java.awt.Color.black);
-
-		// execute c
-		while (true) {
-			setTurnRadarRight(Rules.RADAR_TURN_RATE);
-			// isRadarFrame = true;
-			System.out.println("I am in  run method: " + isRadarFrame);
-			execute();
-		}
 	}
 
-	boolean isRadarFrame = false;
 
 	public void onScannedRobot(ScannedRobotEvent e) {
 
@@ -42,12 +43,17 @@ public class OrangeRobot extends AdvancedRobot {
 		double s = 20 - (3 * firePower);
 		double possibleAs[] = findPossibleA(convertToRadians(degreesO), L, v, s);
 		double realA = possibleAs[findA(degreesO)];
-		double shootAngle = convertToDegrees(findShootAngle(realA, L, convertToRadians(degreesO)));
-		double absoluteShootAngle = shootAngle + getGunHeading();
+		
+		double shootAngle;
+		if (v == 0) {
+			shootAngle = 0;
+		} else {
+			shootAngle = convertToDegrees(findShootAngle(realA, L, convertToRadians(degreesO)));
+		}
+		double absoluteShootAngle = shootAngle + actualBearing;
 
 		double radarInitialTurn = Utils.normalRelativeAngleDegrees(actualBearing - getRadarHeading());
-		double extraTurn = convertToDegrees(
-				Math.min((Math.atan(5 / e.getDistance())) * 1, Rules.RADAR_TURN_RATE_RADIANS));
+		double extraTurn = convertToDegrees(Math.min((Math.atan(5 / e.getDistance())), Rules.RADAR_TURN_RATE_RADIANS));
 		double radarTurn = findRadarTurn(radarInitialTurn, extraTurn);
 
 		System.out.println("ExtraTurn: " + extraTurn);
@@ -55,24 +61,27 @@ public class OrangeRobot extends AdvancedRobot {
 		System.out.println("radarTurn: " + radarTurn);
 
 		setTurnRadarRight(radarTurn);
-
-		if (Utils.normalRelativeAngleDegrees(absoluteShootAngle - getGunHeading()) > 0) {
-			setTurnGunRight(
-					Math.min(Utils.normalRelativeAngleDegrees(absoluteShootAngle - getGunHeading()), Rules.GUN_TURN_RATE));
-		} else if (Utils.normalRelativeAngleDegrees(absoluteShootAngle - getGunHeading()) < 0) {
-			setTurnGunLeft(
-					Math.min(Utils.normalRelativeAngleDegrees(absoluteShootAngle - getGunHeading()), Rules.GUN_TURN_RATE));
+		
+		double angleNeeded = Utils.normalRelativeAngleDegrees(absoluteShootAngle - getGunHeading());
+//		double sign = Math.ceil( (angleNeeded) /360);
+		if(angleNeeded > 0) {
+			setTurnGunRight(Math.min(angleNeeded, Rules.GUN_TURN_RATE * 1));
+		} else if (angleNeeded < 0) {
+			setTurnGunRight(Math.max(angleNeeded, Rules.GUN_TURN_RATE * -1));
 		}
-
-		if (((absoluteShootAngle + 10) >= getGunHeading()) && (getGunHeading() >= (absoluteShootAngle - 10))) {
+		
+		if (((absoluteShootAngle + 1) >= getGunHeading()) && (getGunHeading() >= (absoluteShootAngle - 1))) {
 			System.out.println("Aim");
 		} else {
-			System.out.println("Angle needed: " + (absoluteShootAngle - getGunHeading()));
+			System.out.println();
 		}
+		System.out.println("absolute shoot angle: " + absoluteShootAngle);
+		System.out.println("shoot angle: " + shootAngle + "  actual Bearing: " + actualBearing);
+		System.out.println();
+		System.out.println("gun heading" + getGunHeading());
+		System.out.println("Angle needed" +  angleNeeded );
+		
 
-		// isRadarFrame = !isRadarFrame;
-
-		System.out.println(isRadarFrame);
 		System.out.println();
 		System.out.println("=~=~=~=~=~=~=~=~=~=~=~=~=~=");
 		System.out.println();
