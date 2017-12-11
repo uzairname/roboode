@@ -34,8 +34,8 @@ public class OrangeRobot extends AdvancedRobot {
 
 		double firePower = 1;
 
-		double actualBearing = mod(e.getBearing() + getHeading(), 360);
-		System.out.println("my mod=" + actualBearing);
+		double actualBearing = Utils.normalAbsoluteAngleDegrees(e.getBearing() + getHeading());
+		System.out.println("actual bearing: " + actualBearing);
 
 		double L = e.getDistance();
 		double v = e.getVelocity();
@@ -94,14 +94,6 @@ public class OrangeRobot extends AdvancedRobot {
 		} else {
 			return extraTurn;
 		}
-	}
-
-	private double mod(double x, double n) {
-		double r = x % n;
-		if (r < 0) {
-			r += n;
-		}
-		return r;
 	}
 
 	private double findShootAngle(double a, double L, double O) {
