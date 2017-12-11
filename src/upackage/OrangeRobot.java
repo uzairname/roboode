@@ -1,8 +1,8 @@
 package upackage;
-
-//import javafx.scene.paint.Color;
 import robocode.*;
 import robocode.util.Utils;
+import java.awt.*;
+import java.lang.reflect.Array;
 
 public class OrangeRobot extends AdvancedRobot {
 
@@ -12,27 +12,32 @@ public class OrangeRobot extends AdvancedRobot {
 		setAdjustRadarForGunTurn(true);
 		setAdjustRadarForRobotTurn(true);
 
-		setColors();
+		setBodyColor(new Color(200, 100, 0));
+		setGunColor(new Color(190, 255, 100));
+		setRadarColor(new Color(150, 50, 0));
+		setScanColor(new Color(255, 255, 255));
+		setBulletColor(new Color(255, 190, 0));
 
 		while (true) {
-			setTurnRadarRight(Rules.RADAR_TURN_RATE);
+			setTurnRadarRight(Rules.RADAR_TURN_RATE); 
 			execute();
 		}
 	}
 
 
-	private void setColors() {
-		setBodyColor(java.awt.Color.orange);
-		setGunColor(java.awt.Color.red);
-		setRadarColor(java.awt.Color.orange);
-		setBulletColor(java.awt.Color.lightGray);
-		setScanColor(java.awt.Color.black);
-	}
-
+	double [] previousStraightDurations = new double[20];
+	double straightDurationIndex = 0;
+	double straightHeadingDuration;
+	double previousHeading;
 
 	public void onScannedRobot(ScannedRobotEvent e) {
 
-		double firePower = 1;
+		
+		/*
+		 * Shoot angle 
+		 */
+		
+		double firePower = 0.1;
 
 		double actualBearing = Utils.normalAbsoluteAngleDegrees(e.getBearing() + getHeading());
 		System.out.println("actual bearing: " + actualBearing);
@@ -51,6 +56,11 @@ public class OrangeRobot extends AdvancedRobot {
 		}
 		double absoluteShootAngle = shootAngle + actualBearing;
 
+		
+		/*
+		 * Radar tracking
+		 */
+		
 		double radarInitialTurn = Utils.normalRelativeAngleDegrees(actualBearing - getRadarHeading());
 		double extraTurn = convertToDegrees(Math.min((Math.atan(5 / e.getDistance())), Rules.RADAR_TURN_RATE_RADIANS));
 		double radarTurn = findRadarTurn(radarInitialTurn, extraTurn);
@@ -61,6 +71,11 @@ public class OrangeRobot extends AdvancedRobot {
 
 		setTurnRadarRight(radarTurn);
 		
+		/*
+		 * Gun aim 
+		 */
+		
+		
 		double angleNeeded = Utils.normalRelativeAngleDegrees(absoluteShootAngle - getGunHeading());
 		if(angleNeeded > 0) {
 			setTurnGunRight(Math.min(angleNeeded, Rules.GUN_TURN_RATE * 1));
@@ -68,21 +83,58 @@ public class OrangeRobot extends AdvancedRobot {
 			setTurnGunRight(Math.max(angleNeeded, Rules.GUN_TURN_RATE * -1));
 		}
 		
-		if (((absoluteShootAngle + 1) >= getGunHeading()) && (getGunHeading() >= (absoluteShootAngle - 1))) {
+		/*
+		 * Gun shoot 
+		 */
+		
+		
+		
+		if(previousHeading == e.getHeading()) {
+			straightHeadingDuration++;
+		} else {
+			previousStraightDurations[(int)straightDurationIndex] = straightHeadingDuration;
+			straightDurationIndex++;
+			straightHeadingDuration = 0;
+		}
+		previousHeading = e.getHeading();
+		boolean isAim = ((absoluteShootAngle + 2) >= getGunHeading()) && (getGunHeading() >= (absoluteShootAngle - 2));
+		if (getGunHeat() == 0) {
+			if(Math.round(shootAngle/3) == 0 || e.getDistance() < 50) {
+				if (e.getVelocity() == 0) {
+					setFire(1);
+				} else {
+					setFire(3);
+				}
+			} else if (isAim) {
+				setFire(firePower);
+			}
+		}
+		
+		/*
+		 * Print 
+		 */
+		if (isAim) {
 			System.out.println("Aim");
 		} else {
 			System.out.println();
 		}
-		System.out.println("absolute shoot angle: " + absoluteShootAngle);
-		System.out.println("shoot angle: " + shootAngle + "  actual Bearing: " + actualBearing);
 		System.out.println();
-		System.out.println("gun heading" + getGunHeading());
-		System.out.println("Angle needed" +  angleNeeded );
-		System.out.println("normalized 400: " + Utils.normalAbsoluteAngleDegrees(-90));
-
+//		System.out.println("absolute shoot angle: " + absoluteShootAngle);
+//		System.out.println("shoot angle: " + shootAngle + "  actual Bearing: " + actualBearing);
+////		System.out.println("gun heading" + getGunHeading());
+//		System.out.println("Angle needed" +  angleNeeded );
+//		System.out.println();
+//		System.out.println("distance: " + e.getDistance());
+		System.out.println("streak:" + straightHeadingDuration);
+		System.out.println(previousStraightDurations);
+		
 		System.out.println();
 		System.out.println("=~=~=~=~=~=~=~=~=~=~=~=~=~=");
-		System.out.println();
+		
+		/*
+		 * Execute
+		 */
+		
 		execute();
 	}
 
