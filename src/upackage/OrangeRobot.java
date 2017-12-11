@@ -37,13 +37,12 @@ public class OrangeRobot extends AdvancedRobot {
 		double actualBearing = mod(e.getBearing() + getHeading(), 360);
 		System.out.println("my mod=" + actualBearing);
 
-		double degreesO = findO(actualBearing, e.getHeading());
 		double L = e.getDistance();
 		double v = e.getVelocity();
 		double s = 20 - (3 * firePower);
+		double degreesO = findO(actualBearing, e.getHeading(), v);
 		double possibleAs[] = findPossibleA(convertToRadians(degreesO), L, v, s);
 		double realA = possibleAs[findA(degreesO)];
-		
 		double shootAngle;
 		if (v == 0) {
 			shootAngle = 0;
@@ -63,7 +62,6 @@ public class OrangeRobot extends AdvancedRobot {
 		setTurnRadarRight(radarTurn);
 		
 		double angleNeeded = Utils.normalRelativeAngleDegrees(absoluteShootAngle - getGunHeading());
-//		double sign = Math.ceil( (angleNeeded) /360);
 		if(angleNeeded > 0) {
 			setTurnGunRight(Math.min(angleNeeded, Rules.GUN_TURN_RATE * 1));
 		} else if (angleNeeded < 0) {
@@ -80,7 +78,7 @@ public class OrangeRobot extends AdvancedRobot {
 		System.out.println();
 		System.out.println("gun heading" + getGunHeading());
 		System.out.println("Angle needed" +  angleNeeded );
-		
+		System.out.println("normalized 400: " + Utils.normalAbsoluteAngleDegrees(-90));
 
 		System.out.println();
 		System.out.println("=~=~=~=~=~=~=~=~=~=~=~=~=~=");
@@ -107,16 +105,15 @@ public class OrangeRobot extends AdvancedRobot {
 	}
 
 	private double findShootAngle(double a, double L, double O) {
-		return Math.atan((a * Math.tan(O)) / (L + a));
+		return -1*Math.atan((a * Math.tan(O)) / (L + a));
 	}
 
-	private double findO(double Bearing, double Heading) {
-
-		if (((Bearing - Heading) % 360) >= 0) {
-			return (Bearing - Heading) % 360;
-		} else {
-			return ((Bearing - Heading) % 360) + 360;
-		}
+	private double findO(double Bearing, double Heading, double Velocity) {
+		if (Velocity >= 0) {
+			return Utils.normalAbsoluteAngleDegrees(Bearing - Heading);
+		}	else {
+			return Utils.normalAbsoluteAngleDegrees((Bearing - Heading) + 180);
+		}		
 	}
 
 	private double[] findPossibleA(double O, double L, double v, double s) {
