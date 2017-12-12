@@ -92,7 +92,6 @@ public class OrangeRobot extends AdvancedRobot {
 		 * Gun shoot 
 		 */
 		
-		
 		if((previousHeading == e.getHeading()) && (findSign(previousVelocity) == findSign(e.getVelocity()))) {
 			currentStraightHeading++;
 		} else {
@@ -117,6 +116,17 @@ public class OrangeRobot extends AdvancedRobot {
 					setFire(firePower);
 				}
 			}
+		}
+		
+		/*
+		 * Move
+		 */
+
+		double angleNeededBody = Utils.normalRelativeAngleDegrees((actualBearing + 90) - getHeading());
+		if(angleNeededBody > 0) {
+			setTurnRight(Math.min(angleNeededBody, Rules.MAX_TURN_RATE * 1));
+		} else if (angleNeededBody < 0) {
+			setTurnRight(Math.max(angleNeededBody, Rules.MAX_TURN_RATE * -1));
 		}
 		
 		/*
