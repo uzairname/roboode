@@ -25,10 +25,15 @@ public class OrangeRobot extends AdvancedRobot {
 	}
 
 
-	double [] previousStraightDurations = new double[20];
-	double straightDurationIndex = 0;
-	double straightHeadingDuration;
+//	double [] previousStraightDurations = new double[20];
+//	double straightDurationIndex = 0;
+	double currentStraightHeading;
+	
 	double previousHeading;
+	double previousVelocity;
+	
+	double averageDuration;
+	double durationIndex;
 
 	public void onScannedRobot(ScannedRobotEvent e) {
 
@@ -37,7 +42,7 @@ public class OrangeRobot extends AdvancedRobot {
 		 * Shoot angle 
 		 */
 		
-		double firePower = 0.1;
+		double firePower = 1.5;
 
 		double actualBearing = Utils.normalAbsoluteAngleDegrees(e.getBearing() + getHeading());
 		System.out.println("actual bearing: " + actualBearing);
@@ -88,25 +93,29 @@ public class OrangeRobot extends AdvancedRobot {
 		 */
 		
 		
-		
-		if(previousHeading == e.getHeading()) {
-			straightHeadingDuration++;
+		if((previousHeading == e.getHeading()) && (findSign(previousVelocity) == findSign(e.getVelocity()))) {
+			currentStraightHeading++;
 		} else {
-			previousStraightDurations[(int)straightDurationIndex] = straightHeadingDuration;
-			straightDurationIndex++;
-			straightHeadingDuration = 0;
+			if (currentStraightHeading > 2) {
+				averageDuration = ((averageDuration*durationIndex) + currentStraightHeading) / (durationIndex + 1);
+				durationIndex++;
+			}
+			currentStraightHeading = 0;
 		}
 		previousHeading = e.getHeading();
+		previousVelocity = e.getVelocity();
 		boolean isAim = ((absoluteShootAngle + 2) >= getGunHeading()) && (getGunHeading() >= (absoluteShootAngle - 2));
+		
 		if (getGunHeat() == 0) {
 			if(Math.round(shootAngle/3) == 0 || e.getDistance() < 50) {
-				if (e.getVelocity() == 0) {
-					setFire(1);
+					setFire(firePower);			
+			} else if (currentStraightHeading > 5) {
+				
+				if (currentStraightHeading > 15) {
+					setFire(firePower);
 				} else {
-					setFire(3);
+					setFire(firePower);
 				}
-			} else if (isAim) {
-				setFire(firePower);
 			}
 		}
 		
@@ -125,8 +134,8 @@ public class OrangeRobot extends AdvancedRobot {
 //		System.out.println("Angle needed" +  angleNeeded );
 //		System.out.println();
 //		System.out.println("distance: " + e.getDistance());
-		System.out.println("streak:" + straightHeadingDuration);
-		System.out.println(previousStraightDurations);
+		System.out.println("streak:" + currentStraightHeading);
+		System.out.println("average duration: " + averageDuration);
 		
 		System.out.println();
 		System.out.println("=~=~=~=~=~=~=~=~=~=~=~=~=~=");
@@ -136,6 +145,16 @@ public class OrangeRobot extends AdvancedRobot {
 		 */
 		
 		execute();
+	}
+	
+	public int findSign(double number) {
+		if(number > 0) {
+			return 1;
+		} else if (number < 0) {
+			return -1;
+		} else {
+			return 0;
+		}
 	}
 
 	public double findRadarTurn(double radarInitialTurn, double extraTurn) {
