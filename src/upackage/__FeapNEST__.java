@@ -4,8 +4,8 @@ import robocode.util.Utils;
 import java.awt.*;
 import java.lang.reflect.Array;
 
-public class OrangeRobot extends AdvancedRobot {
-
+public class __FeapNEST__ extends AdvancedRobot {
+//FeapNEST
 	public void run() {
 
 		setAdjustGunForRobotTurn(true);
@@ -19,30 +19,50 @@ public class OrangeRobot extends AdvancedRobot {
 		setBulletColor(new Color(255, 190, 0));
 
 		while (true) {
-			setTurnRadarRight(Rules.RADAR_TURN_RATE); 
+			setTurnRadarRight(Rules.RADAR_TURN_RATE); 			
 			execute();
 		}
 	}
+	
 
-
-//	double [] previousStraightDurations = new double[20];
-//	double straightDurationIndex = 0;
 	double currentStraightHeading;
+	double currentCurvedHeading;
 	
 	double previousHeading;
 	double previousVelocity;
 	
 	double averageDuration;
 	double durationIndex;
+	double firePower = 0.1;
+	
+	double turnDirection = 1;
 
 	public void onScannedRobot(ScannedRobotEvent e) {
 
+		/*
+		 * Color flash
+		 */
+		
+		if(getTime() % 6 < 2) {
+			setBodyColor(new Color(255, 200, 100));
+			setGunColor(new Color(0, 0, 255));
+			setRadarColor(new Color(255, 255, 0));
+			setScanColor(new Color(255, 255, 255));
+			setBulletColor(new Color(0, 0, 0));
+		} else if (getTime() % 6 < 4) {
+			setAllColors(java.awt.Color.BLACK);
+		} else if (getTime() % 6 < 6) {
+			setBodyColor(new Color(150, 20, 0));
+			setGunColor(new Color(255, 200, 0));
+			setRadarColor(new Color(255, 255, 0));
+			setScanColor(new Color(255, 50, 0));
+			setBulletColor(new Color(0, 0, 0));
+		}
+		
 		
 		/*
 		 * Shoot angle 
 		 */
-		
-		double firePower = 1.5;
 
 		double actualBearing = Utils.normalAbsoluteAngleDegrees(e.getBearing() + getHeading());
 		System.out.println("actual bearing: " + actualBearing);
@@ -91,47 +111,79 @@ public class OrangeRobot extends AdvancedRobot {
 		/*
 		 * Gun shoot 
 		 */
-		
-		if((previousHeading == e.getHeading()) && (findSign(previousVelocity) == findSign(e.getVelocity()))) {
-			currentStraightHeading++;
+
+		if((previousHeading == e.getHeading()) && (findSign(previousVelocity) == findSign(e.getVelocity())) && previousVelocity == e.getVelocity()) {
+			currentCurvedHeading = 0;
+			currentStraightHeading += Math.abs(e.getVelocity());
+			//make this based on time rather than distance, to get accurate straightHeading at beginning of match
 		} else {
-			if (currentStraightHeading > 2) {
+			if (currentStraightHeading > 8) {
 				averageDuration = ((averageDuration*durationIndex) + currentStraightHeading) / (durationIndex + 1);
 				durationIndex++;
 			}
+			currentCurvedHeading += Math.abs(e.getVelocity());
 			currentStraightHeading = 0;
 		}
-		previousHeading = e.getHeading();
-		previousVelocity = e.getVelocity();
-		boolean isAim = ((absoluteShootAngle + 2) >= getGunHeading()) && (getGunHeading() >= (absoluteShootAngle - 2));
 		
-		if (getGunHeat() == 0) {
-			if(Math.round(shootAngle/3) == 0 || e.getDistance() < 50) {
-					setFire(firePower);			
-			} else if (currentStraightHeading > 5) {
-				
-				if (currentStraightHeading > 15) {
-					setFire(firePower);
-				} else {
-					setFire(firePower);
-				}
+		boolean isDisabled = e.getEnergy() <= 0;
+		boolean isLongHeadingDistance = (currentStraightHeading >= 80) || (currentStraightHeading == 0);
+		boolean isProjectionLessThanAverage = currentStraightHeading + Math.abs(realA*Math.tan(convertToRadians(degreesO))) < averageDuration;
+		boolean isCloseDistance = e.getDistance() < 250;
+		boolean isVeryCloseDistance = e.getDistance() < 80;
+		boolean isLongCurvedPath = currentCurvedHeading >= 120;
+		boolean isStopped = e.getVelocity() == 0;
+		boolean isFacingMe = Math.round(shootAngle/3) == 0;
+		boolean remainingEnergy = getEnergy() >= 6;
+		
+		if (remainingEnergy) {
+			if (isDisabled) {
+				setFire(firePower);
+				firePower = 3;
+			} else if ( (isStopped || (isFacingMe && isCloseDistance)) && isLongHeadingDistance) {
+						setFire(firePower);
+						firePower = 3;
+			} else if (isProjectionLessThanAverage) {
+					if (e.getDistance() < 70) {
+						setFire(firePower);
+						firePower = 3;
+					} else {
+						setFire(firePower);
+						firePower = 2;
+					}
+			} else if (isVeryCloseDistance){
+					setFire (firePower);
+					firePower = 3;
+			} else if (isLongCurvedPath) {
+				setFire (firePower);
+				firePower = 0.5;
 			}
 		}
+	
+		previousHeading = e.getHeading();
+		previousVelocity = e.getVelocity();
 		
 		/*
 		 * Move
 		 */
-
-		double angleNeededBody = Utils.normalRelativeAngleDegrees((actualBearing + 90) - getHeading());
-		if(angleNeededBody > 0) {
-			setTurnRight(Math.min(angleNeededBody, Rules.MAX_TURN_RATE * 1));
-		} else if (angleNeededBody < 0) {
-			setTurnRight(Math.max(angleNeededBody, Rules.MAX_TURN_RATE * -1));
+		if(Math.abs(getX()) == 1) {
+			
 		}
+		double angleNeededBody = Utils.normalRelativeAngleDegrees(((actualBearing + 90) - getHeading()) - 25);
+		double turnRight;
+		if(angleNeededBody > 0) {
+			turnRight = (Math.min(angleNeededBody, Rules.MAX_TURN_RATE * 1));
+		} else if (angleNeededBody < 0) {
+			turnRight = (Math.max(angleNeededBody, Rules.MAX_TURN_RATE * -1));
+		} else {
+			turnRight = 0;
+		}
+		setTurnRight(turnRight);
+		setAhead(8);
 		
 		/*
 		 * Print 
 		 */
+		boolean isAim = ((absoluteShootAngle + 2) >= getGunHeading()) && (getGunHeading() >= (absoluteShootAngle - 2));
 		if (isAim) {
 			System.out.println("Aim");
 		} else {
@@ -142,10 +194,15 @@ public class OrangeRobot extends AdvancedRobot {
 //		System.out.println("shoot angle: " + shootAngle + "  actual Bearing: " + actualBearing);
 ////		System.out.println("gun heading" + getGunHeading());
 //		System.out.println("Angle needed" +  angleNeeded );
-//		System.out.println();
-//		System.out.println("distance: " + e.getDistance());
-		System.out.println("streak:" + currentStraightHeading);
+//		System.out.println("energy:" + e.getEnergy());
+		System.out.println("is thing true? " + (currentStraightHeading + Math.abs(realA*Math.tan(convertToRadians(degreesO))) < averageDuration));
+		System.out.println("firepower: " + firePower);
+		System.out.println("distance: " + e.getDistance());
+		System.out.println("straight distance:" + currentStraightHeading);
+		System.out.println("curved distance: " + currentCurvedHeading);
+//		System.out.println("projected: " + Math.abs(realA*Math.tan(convertToRadians(degreesO))) + " RealA: " + realA + "radians O: " + convertToRadians(degreesO));
 		System.out.println("average duration: " + averageDuration);
+		System.out.println("index: " + durationIndex);
 		
 		System.out.println();
 		System.out.println("=~=~=~=~=~=~=~=~=~=~=~=~=~=");
@@ -157,7 +214,7 @@ public class OrangeRobot extends AdvancedRobot {
 		execute();
 	}
 	
-	public int findSign(double number) {
+	public double findSign(double number) {
 		if(number > 0) {
 			return 1;
 		} else if (number < 0) {
@@ -168,13 +225,7 @@ public class OrangeRobot extends AdvancedRobot {
 	}
 
 	public double findRadarTurn(double radarInitialTurn, double extraTurn) {
-		if (radarInitialTurn < 0) {
-			return radarInitialTurn - extraTurn;
-		} else if (radarInitialTurn > 0) {
-			return radarInitialTurn + extraTurn;
-		} else {
-			return extraTurn;
-		}
+		return radarInitialTurn + (extraTurn * findSign(radarInitialTurn));
 	}
 
 	private double findShootAngle(double a, double L, double O) {
@@ -184,16 +235,23 @@ public class OrangeRobot extends AdvancedRobot {
 	private double findO(double Bearing, double Heading, double Velocity) {
 		if (Velocity >= 0) {
 			return Utils.normalAbsoluteAngleDegrees(Bearing - Heading);
-		}	else {
+		} else if (Velocity <= 0) {
 			return Utils.normalAbsoluteAngleDegrees((Bearing - Heading) + 180);
-		}		
+		} else {
+			return 0;
+		}
 	}
 
 	private double[] findPossibleA(double O, double L, double v, double s) {
-		double quadratica = (((s * s) / (v * v)) - 1) / (Math.cos(O) * Math.cos(O));
-		double quadraticb = 2 * L * -1;
-		double quadraticc = L * L * -1;
-		return solve(quadratica, quadraticb, quadraticc);
+		if (v == 0) {
+			double zero [] = {0, 0};
+			return zero;
+		} else {
+			double quadratica = (((s * s) / (v * v)) - 1) / (Math.cos(O) * Math.cos(O));
+			double quadraticb = 2 * L * -1;
+			double quadraticc = L * L * -1;
+			return solve(quadratica, quadraticb, quadraticc);
+		}
 	}
 
 	private int findA(double degO) {
