@@ -245,10 +245,10 @@ public class __FeapNEST__ extends AdvancedRobot {
 	}
 	
 	public double findIncline (double distance) {
-		if (distance >= 100) {
+		if (distance >= 120) {
 			return (-100 * Math.pow(1.003, -1*distance)) + 90;
 		} else {
-			return (0.79*distance) - 63;
+			return (0.79*distance) - 75;
 		}
 	}
 	
