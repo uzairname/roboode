@@ -5,25 +5,6 @@ import java.awt.*;
 import java.lang.reflect.Array;
 
 public class __FeapNEST__ extends AdvancedRobot {
-//FeapNEST
-	public void run() {
-
-		setAdjustGunForRobotTurn(true);
-		setAdjustRadarForGunTurn(true);
-		setAdjustRadarForRobotTurn(true);
-
-		setBodyColor(new Color(200, 100, 0));
-		setGunColor(new Color(190, 255, 100));
-		setRadarColor(new Color(150, 50, 0));
-		setScanColor(new Color(255, 255, 255));
-		setBulletColor(new Color(255, 190, 0));
-
-		while (true) {
-			setTurnRadarRight(Rules.RADAR_TURN_RATE); 			
-			execute();
-		}
-	}
-	
 
 	double currentStraightHeading;
 	double currentStraightHeadingTime;
@@ -40,50 +21,35 @@ public class __FeapNEST__ extends AdvancedRobot {
 	double movementDirection = -1;
 	boolean isMovingFromBorder;
 
+	public void run() {
+
+		setAdjustGunForRobotTurn(true);
+		setAdjustRadarForGunTurn(true);
+		setAdjustRadarForRobotTurn(true);
+
+		while (true) {
+			setTurnRadarRight(Rules.RADAR_TURN_RATE); 			
+			execute();
+		}
+	}
+
 	public void onScannedRobot(ScannedRobotEvent e) {
 
-		/*
-		 * Color flash
-		 */
-		
-		if(getTime() % 6 < 2) {
-			setBodyColor(new Color(255, 200, 100));
-			setGunColor(new Color(0, 0, 255));
-			setRadarColor(new Color(255, 255, 0));
-			setScanColor(new Color(255, 255, 255));
-			setBulletColor(new Color(0, 0, 0));
-		} else if (getTime() % 6 < 4) {
-			setAllColors(java.awt.Color.BLACK);
-		} else if (getTime() % 6 < 6) {
-			setBodyColor(new Color(150, 20, 0));
-			setGunColor(new Color(255, 200, 0));
-			setRadarColor(new Color(255, 255, 0));
-			setScanColor(new Color(255, 50, 0));
-			setBulletColor(new Color(0, 0, 0));
-		}
+		colorFlash();
 		
 		/*
 		 * Shoot angle 
 		 */
 
 		double actualBearing = Utils.normalAbsoluteAngleDegrees(e.getBearing() + getHeading());
-		System.out.println("actual bearing: " + actualBearing);
-
 		double L = e.getDistance();
 		double v = e.getVelocity();
 		double s = 20 - (3 * firePower);
 		double degreesO = findO(actualBearing, e.getHeading(), v);
 		double possibleAs[] = findPossibleA(convertToRadians(degreesO), L, v, s);
 		double realA = possibleAs[findA(degreesO)];
-		double shootAngle;
-		if (v == 0) {
-			shootAngle = 0;
-		} else {
-			shootAngle = convertToDegrees(findShootAngle(realA, L, convertToRadians(degreesO)));
-		}
-		double absoluteShootAngle = shootAngle + actualBearing;
+		double absoluteShootAngle = findAbsShootingAngle(actualBearing, L, v, degreesO, realA);
 
-		
 		/*
 		 * Radar tracking
 		 */
@@ -242,6 +208,38 @@ public class __FeapNEST__ extends AdvancedRobot {
 		 */
 		
 		execute();
+	}
+
+	private double findAbsShootingAngle(double actualBearing, double L, double v, double degreesO, double realA) {
+		double shootAngle;
+		if (v == 0) {
+			shootAngle = 0;
+		} else {
+			shootAngle = convertToDegrees(findShootAngle(realA, L, convertToRadians(degreesO)));
+		}
+		return shootAngle + actualBearing;
+	}
+
+	private void colorFlash() {
+		/*
+		 * Color flash
+		 */
+		
+		if(getTime() % 6 < 2) {
+			setBodyColor(new Color(255, 200, 100));
+			setGunColor(new Color(0, 0, 255));
+			setRadarColor(new Color(255, 255, 0));
+			setScanColor(new Color(255, 255, 255));
+			setBulletColor(new Color(0, 0, 0));
+		} else if (getTime() % 6 < 4) {
+			setAllColors(java.awt.Color.BLACK);
+		} else if (getTime() % 6 < 6) {
+			setBodyColor(new Color(150, 20, 0));
+			setGunColor(new Color(255, 200, 0));
+			setRadarColor(new Color(255, 255, 0));
+			setScanColor(new Color(255, 50, 0));
+			setBulletColor(new Color(0, 0, 0));
+		}
 	}
 	
 	public double findIncline (double distance) {
