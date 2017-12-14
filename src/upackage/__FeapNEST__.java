@@ -183,9 +183,6 @@ public class __FeapNEST__ extends AdvancedRobot {
 		/*
 		 * Move
 		 */
-//		if (!isInBounds(getX(), getY(), getBattleFieldWidth(), getBattleFieldHeight(), getWidth() + 20, getHeight() + 20)) {
-//			movementDirection = movementDirection*-1;
-//		}
 		moveInBounds(getX(), getY(), getBattleFieldWidth(), getBattleFieldHeight(), getWidth() + 20, getHeight() + 20);
 		
 		if (isInBounds(getX(), getY(), getBattleFieldWidth(), getBattleFieldHeight(), getWidth() + 29, getHeight() + 29)) {
