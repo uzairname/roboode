@@ -1,4 +1,4 @@
-package upackage;
+package githubsamples;
 import robocode.*;
 import java.awt.*;
 

@@ -1,4 +1,4 @@
-package upackage;
+package githubsamples;
 
 import java.awt.Color;
 import java.awt.Graphics2D;

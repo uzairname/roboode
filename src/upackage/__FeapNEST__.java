@@ -135,8 +135,8 @@ public class __FeapNEST__ extends AdvancedRobot {
 		
 		boolean isDisabled = e.getEnergy() <= 0;
 		boolean isProjectionLessThanAverage = (currentStraightHeadingTime >= 4) && (currentStraightHeading + Math.abs(realA*Math.tan(convertToRadians(degreesO))) < averageDuration);
-		boolean isClose = e.getDistance() < 250;
-		boolean isVeryClose = e.getDistance() < 100;
+		boolean isClose = e.getDistance() < 350;
+		boolean isVeryClose = e.getDistance() < 250;
 		boolean isLongStraightPath = (currentStraightHeading >= 80) || (currentStraightHeading == 0);
 		boolean isLongCurvedPath = currentCurvedHeading >= 120;
 		boolean isLongStraightTime = currentStraightHeadingTime >= 7;
@@ -169,7 +169,7 @@ public class __FeapNEST__ extends AdvancedRobot {
 					firePower = 3;
 				} else if (isClose) {
 					setFire (firePower);
-					firePower = 1.5;
+					firePower = 2;
 				} else {
 					setFire (firePower);
 					firePower = 0.5;
@@ -199,7 +199,7 @@ public class __FeapNEST__ extends AdvancedRobot {
 				turnRight = 0;
 			}
 			setTurnRight(turnRight);
-			if (getTime() % 100 == 1) {
+			if (getTime() % 40 == 1) {
 				movementDirection = -1*movementDirection;
 			}
 		}
@@ -248,7 +248,7 @@ public class __FeapNEST__ extends AdvancedRobot {
 		if (distance >= 100) {
 			return (-100 * Math.pow(1.003, -1*distance)) + 90;
 		} else {
-			return Math.max((0.79*distance) - 63, 0);
+			return (0.79*distance) - 63;
 		}
 	}
 	
@@ -257,7 +257,6 @@ public class __FeapNEST__ extends AdvancedRobot {
 		boolean boundsUp = !(fieldHeight - y > robotHeight);
 		boolean boundsLeft = !(x > robotWidth);
 		boolean boundsDown = !(y > robotHeight);
-		double moveDirection;
 		
 		if (boundsLeft) {
 			System.out.println("left");
