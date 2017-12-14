@@ -5,25 +5,6 @@ import java.awt.*;
 import java.lang.reflect.Array;
 
 public class __FeapNEST__ extends AdvancedRobot {
-//FeapNEST
-	public void run() {
-
-		setAdjustGunForRobotTurn(true);
-		setAdjustRadarForGunTurn(true);
-		setAdjustRadarForRobotTurn(true);
-
-		setBodyColor(new Color(200, 100, 0));
-		setGunColor(new Color(190, 255, 100));
-		setRadarColor(new Color(150, 50, 0));
-		setScanColor(new Color(255, 255, 255));
-		setBulletColor(new Color(255, 190, 0));
-
-		while (true) {
-			setTurnRadarRight(Rules.RADAR_TURN_RATE); 			
-			execute();
-		}
-	}
-	
 
 	double currentStraightHeading;
 	double currentStraightHeadingTime;
@@ -40,171 +21,56 @@ public class __FeapNEST__ extends AdvancedRobot {
 	double movementDirection = -1;
 	boolean isMovingFromBorder;
 
+	public void run() {
+
+		setAdjustGunForRobotTurn(true);
+		setAdjustRadarForGunTurn(true);
+		setAdjustRadarForRobotTurn(true);
+
+		while (true) {
+			setTurnRadarRight(Rules.RADAR_TURN_RATE); 			
+			execute();
+		}
+	}
+
 	public void onScannedRobot(ScannedRobotEvent e) {
 
-		/*
-		 * Color flash
-		 */
-		
-		if(getTime() % 6 < 2) {
-			setBodyColor(new Color(255, 200, 100));
-			setGunColor(new Color(0, 0, 255));
-			setRadarColor(new Color(255, 255, 0));
-			setScanColor(new Color(255, 255, 255));
-			setBulletColor(new Color(0, 0, 0));
-		} else if (getTime() % 6 < 4) {
-			setAllColors(java.awt.Color.BLACK);
-		} else if (getTime() % 6 < 6) {
-			setBodyColor(new Color(150, 20, 0));
-			setGunColor(new Color(255, 200, 0));
-			setRadarColor(new Color(255, 255, 0));
-			setScanColor(new Color(255, 50, 0));
-			setBulletColor(new Color(0, 0, 0));
-		}
+		colorFlash();
 		
 		/*
 		 * Shoot angle 
 		 */
 
 		double actualBearing = Utils.normalAbsoluteAngleDegrees(e.getBearing() + getHeading());
-		System.out.println("actual bearing: " + actualBearing);
-
 		double L = e.getDistance();
 		double v = e.getVelocity();
 		double s = 20 - (3 * firePower);
 		double degreesO = findO(actualBearing, e.getHeading(), v);
 		double possibleAs[] = findPossibleA(convertToRadians(degreesO), L, v, s);
 		double realA = possibleAs[findA(degreesO)];
-		double shootAngle;
-		if (v == 0) {
-			shootAngle = 0;
-		} else {
-			shootAngle = convertToDegrees(findShootAngle(realA, L, convertToRadians(degreesO)));
-		}
-		double absoluteShootAngle = shootAngle + actualBearing;
+		double absoluteShootAngle = findAbsShootingAngle(actualBearing, L, v, degreesO, realA);
 
-		
-		/*
-		 * Radar tracking
-		 */
-		
-		double radarInitialTurn = Utils.normalRelativeAngleDegrees(actualBearing - getRadarHeading());
-		double extraTurn = convertToDegrees(Math.min((Math.atan(5 / e.getDistance())), Rules.RADAR_TURN_RATE_RADIANS));
-		double radarTurn = findRadarTurn(radarInitialTurn, extraTurn);
-
-		System.out.println("ExtraTurn: " + extraTurn);
-		System.out.println("Initial" + radarInitialTurn);
-		System.out.println("radarTurn: " + radarTurn);
-
-		setTurnRadarRight(radarTurn);
-		
-		/*
-		 * Gun aim 
-		 */
-		
-		
-		double angleNeeded = Utils.normalRelativeAngleDegrees(absoluteShootAngle - getGunHeading());
-		if(angleNeeded > 0) {
-			setTurnGunRight(Math.min(angleNeeded, Rules.GUN_TURN_RATE * 1));
-		} else if (angleNeeded < 0) {
-			setTurnGunRight(Math.max(angleNeeded, Rules.GUN_TURN_RATE * -1));
-		}
+		moveRadar(e, actualBearing);
+				
+		aimGun(absoluteShootAngle);
 		
 		/*
 		 * Gun shoot 
 		 */
 
-		if((previousHeading == e.getHeading()) && (findSign(previousVelocity) == findSign(e.getVelocity()))) {
-			currentCurvedHeading = 0;
-			currentCurvedHeadingTime = 0;
-			
-			currentStraightHeading += Math.abs(e.getVelocity());
-			currentStraightHeadingTime ++;
-			//make this based on time rather than distance, to get accurate straightHeading at beginning of match
-		} else {
-			if (currentStraightHeading > 8) {
-				averageDuration = ((averageDuration*durationIndex) + currentStraightHeading) / (durationIndex + 1);
-				durationIndex++;
-			}
-			currentCurvedHeading += Math.abs(e.getVelocity());
-			currentCurvedHeadingTime ++;
-			
-			currentStraightHeading = 0;
-			currentStraightHeadingTime = 0;
-		}
+		calculateDistances(e);
 		
-		boolean isDisabled = e.getEnergy() <= 0;
-		boolean isProjectionLessThanAverage = (currentStraightHeadingTime >= 4) && (currentStraightHeading + Math.abs(realA*Math.tan(convertToRadians(degreesO))) < averageDuration);
-		boolean isClose = e.getDistance() < 350;
-		boolean isVeryClose = e.getDistance() < 250;
-		boolean isLongStraightPath = (currentStraightHeading >= 80) || (currentStraightHeading == 0);
-		boolean isLongCurvedPath = currentCurvedHeading >= 120;
-		boolean isLongStraightTime = currentStraightHeadingTime >= 7;
-		boolean isLongCurvedTime = currentCurvedHeadingTime >= 10;
-		
-		boolean isStopped = e.getVelocity() == 0;
-		boolean remainingEnergy = getEnergy() >= 6;
-		
-		if (remainingEnergy) {
-			if (isDisabled) {
-				setFire(firePower);
-				firePower = 3;
-			} else if (isVeryClose) {
-				setFire (firePower);
-				firePower = 3; 
-			} else if (isStopped || isLongStraightTime) {
-					setFire(firePower);
-					firePower = 3;
-			} else if (isProjectionLessThanAverage) {
-					if (isClose) {
-						setFire(firePower);
-						firePower = 2.5;
-					} else {
-						setFire(firePower);
-						firePower = 1.5;
-					}
-			} else if (isLongCurvedPath) {
-				if (isVeryClose) {
-					setFire (firePower);
-					firePower = 3;
-				} else if (isClose) {
-					setFire (firePower);
-					firePower = 2;
-				} else {
-					setFire (firePower);
-					firePower = 0.5;
-				}
-			}
-		}
+		setFirePower(e, degreesO, realA);
 	
 		previousHeading = e.getHeading();
 		previousVelocity = e.getVelocity();
 		
-		/*
-		 * Move
-		 */
-		moveInBounds(getX(), getY(), getBattleFieldWidth(), getBattleFieldHeight(), getWidth() + 20, getHeight() + 20);
-		
-		if (isInBounds(getX(), getY(), getBattleFieldWidth(), getBattleFieldHeight(), getWidth() + 29, getHeight() + 29)) {
-			double angleNeededBody = Utils.normalRelativeAngleDegrees(((actualBearing + 90) - getHeading()) - (findIncline(e.getDistance())*movementDirection));
-			double turnRight;
-			if(angleNeededBody > 0) {
-				turnRight = (Math.min(angleNeededBody, Rules.MAX_TURN_RATE * 1));
-			} else if (angleNeededBody < 0) {
-				turnRight = (Math.max(angleNeededBody, Rules.MAX_TURN_RATE * -1));
-			} else {
-				turnRight = 0;
-			}
-			setTurnRight(turnRight);
-			if (getTime() % 40 == 1) {
-				movementDirection = -1*movementDirection;
-			}
-		}
-		setAhead(Rules.MAX_VELOCITY * movementDirection);
+		move(e, actualBearing);
 		
 		/*
 		 * Print 
 		 */
+		
 		boolean isAim = ((absoluteShootAngle + 2) >= getGunHeading()) && (getGunHeading() >= (absoluteShootAngle - 2));
 		if (isAim) {
 			System.out.println("Aim");
@@ -239,6 +105,144 @@ public class __FeapNEST__ extends AdvancedRobot {
 		 */
 		
 		execute();
+	}
+
+	private void move(ScannedRobotEvent e, double actualBearing) {
+		moveInBounds(getX(), getY(), getBattleFieldWidth(), getBattleFieldHeight(), getWidth() + 20, getHeight() + 20);
+		
+		if (isInBounds(getX(), getY(), getBattleFieldWidth(), getBattleFieldHeight(), getWidth() + 29, getHeight() + 29)) {
+			double angleNeededBody = Utils.normalRelativeAngleDegrees(((actualBearing + 90) - getHeading()) - (findIncline(e.getDistance())*movementDirection));
+			double turnRight;
+			if(angleNeededBody > 0) {
+				turnRight = (Math.min(angleNeededBody, Rules.MAX_TURN_RATE * 1));
+			} else if (angleNeededBody < 0) {
+				turnRight = (Math.max(angleNeededBody, Rules.MAX_TURN_RATE * -1));
+			} else {
+				turnRight = 0;
+			}
+			setTurnRight(turnRight);
+			if (getTime() % 40 == 1) {
+				movementDirection = -1*movementDirection;
+			}
+		}
+		setAhead(Rules.MAX_VELOCITY * movementDirection);
+	}
+
+	private void setFirePower(ScannedRobotEvent e, double degreesO, double realA) {
+		boolean isDisabled = e.getEnergy() <= 0;
+		boolean isProjectionLessThanAverage = (currentStraightHeadingTime >= 4) && (currentStraightHeading + Math.abs(realA*Math.tan(convertToRadians(degreesO))) < averageDuration);
+		boolean isClose = e.getDistance() < 350;
+		boolean isVeryClose = e.getDistance() < 250;
+		boolean isLongCurvedPath = currentCurvedHeading >= 120;
+		boolean isLongStraightTime = currentStraightHeadingTime >= 7;		
+		boolean isStopped = e.getVelocity() == 0;
+		boolean remainingEnergy = getEnergy() >= 6;
+		
+		if (remainingEnergy) {
+			if (isDisabled) {
+				setFire(firePower);
+				firePower = 3;
+			} else if (isVeryClose) {
+				setFire (firePower);
+				firePower = 3; 
+			} else if (isStopped || isLongStraightTime) {
+					setFire(firePower);
+					firePower = 3;
+			} else if (isProjectionLessThanAverage) {
+					if (isClose) {
+						setFire(firePower);
+						firePower = 2.5;
+					} else {
+						setFire(firePower);
+						firePower = 1.5;
+					}
+			} else if (isLongCurvedPath) {
+				if (isVeryClose) {
+					setFire (firePower);
+					firePower = 3;
+				} else if (isClose) {
+					setFire (firePower);
+					firePower = 2;
+				} else {
+					setFire (firePower);
+					firePower = 0.5;
+				}
+			}
+		}
+	}
+
+	private void calculateDistances(ScannedRobotEvent e) {
+		if((previousHeading == e.getHeading()) && (findSign(previousVelocity) == findSign(e.getVelocity()))) {
+			currentCurvedHeading = 0;
+			currentCurvedHeadingTime = 0;
+			
+			currentStraightHeading += Math.abs(e.getVelocity());
+			currentStraightHeadingTime ++;
+			//make this based on time rather than distance, to get accurate straightHeading at beginning of match
+		} else {
+			if (currentStraightHeading > 8) {
+				averageDuration = ((averageDuration*durationIndex) + currentStraightHeading) / (durationIndex + 1);
+				durationIndex++;
+			}
+			currentCurvedHeading += Math.abs(e.getVelocity());
+			currentCurvedHeadingTime ++;
+			
+			currentStraightHeading = 0;
+			currentStraightHeadingTime = 0;
+		}
+	}
+
+	private void aimGun(double absoluteShootAngle) {
+		double angleNeeded = Utils.normalRelativeAngleDegrees(absoluteShootAngle - getGunHeading());
+		if(angleNeeded > 0) {
+			setTurnGunRight(Math.min(angleNeeded, Rules.GUN_TURN_RATE * 1));
+		} else if (angleNeeded < 0) {
+			setTurnGunRight(Math.max(angleNeeded, Rules.GUN_TURN_RATE * -1));
+		}
+	}
+
+	private void moveRadar(ScannedRobotEvent e, double actualBearing) {
+		double radarInitialTurn = Utils.normalRelativeAngleDegrees(actualBearing - getRadarHeading());
+		double extraTurn = convertToDegrees(Math.min((Math.atan(5 / e.getDistance())), Rules.RADAR_TURN_RATE_RADIANS));
+		double radarTurn = findRadarTurn(radarInitialTurn, extraTurn);
+
+		System.out.println("ExtraTurn: " + extraTurn);
+		System.out.println("Initial" + radarInitialTurn);
+		System.out.println("radarTurn: " + radarTurn);
+
+		setTurnRadarRight(radarTurn);
+	}
+
+	private double findAbsShootingAngle(double actualBearing, double L, double v, double degreesO, double realA) {
+		double shootAngle;
+		if (v == 0) {
+			shootAngle = 0;
+		} else {
+			shootAngle = convertToDegrees(findShootAngle(realA, L, convertToRadians(degreesO)));
+		}
+		return shootAngle + actualBearing;
+	}
+
+	private void colorFlash() {
+		/*
+		 * Color flash
+		 */
+		
+		if(getTime() % 6 < 2) {
+			setBodyColor(new Color(255, 200, 100));
+			setGunColor(new Color(0, 0, 255));
+			setRadarColor(new Color(255, 255, 0));
+			setScanColor(new Color(255, 255, 255));
+			setBulletColor(new Color(0, 0, 0));
+		} else if (getTime() % 6 < 4) {
+			setAllColors(java.awt.Color.BLACK);
+		} else if (getTime() % 6 < 6) {
+			setBodyColor(new Color(150, 20, 0));
+			setGunColor(new Color(255, 200, 0));
+			setRadarColor(new Color(255, 255, 0));
+			setScanColor(new Color(255, 50, 0));
+			setBulletColor(new Color(0, 0, 0));
+		}
 	}
 	
 	public double findIncline (double distance) {
