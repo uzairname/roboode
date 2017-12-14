@@ -26,7 +26,9 @@ public class __FeapNEST__ extends AdvancedRobot {
 	
 
 	double currentStraightHeading;
+	double currentStraightHeadingTime;
 	double currentCurvedHeading;
+	double currentCurvedHeadingTime;
 	
 	double previousHeading;
 	double previousVelocity;
@@ -35,7 +37,8 @@ public class __FeapNEST__ extends AdvancedRobot {
 	double durationIndex;
 	double firePower = 0.1;
 	
-	double turnDirection = 1;
+	double movementDirection = -1;
+	boolean isMovingFromBorder;
 
 	public void onScannedRobot(ScannedRobotEvent e) {
 
@@ -112,9 +115,12 @@ public class __FeapNEST__ extends AdvancedRobot {
 		 * Gun shoot 
 		 */
 
-		if((previousHeading == e.getHeading()) && (findSign(previousVelocity) == findSign(e.getVelocity())) && previousVelocity == e.getVelocity()) {
+		if((previousHeading == e.getHeading()) && (findSign(previousVelocity) == findSign(e.getVelocity()))) {
 			currentCurvedHeading = 0;
+			currentCurvedHeadingTime = 0;
+			
 			currentStraightHeading += Math.abs(e.getVelocity());
+			currentStraightHeadingTime ++;
 			//make this based on time rather than distance, to get accurate straightHeading at beginning of match
 		} else {
 			if (currentStraightHeading > 8) {
@@ -122,40 +128,50 @@ public class __FeapNEST__ extends AdvancedRobot {
 				durationIndex++;
 			}
 			currentCurvedHeading += Math.abs(e.getVelocity());
+			currentCurvedHeadingTime ++;
+			
 			currentStraightHeading = 0;
+			currentStraightHeadingTime = 0;
 		}
 		
 		boolean isDisabled = e.getEnergy() <= 0;
-		boolean isLongHeadingDistance = (currentStraightHeading >= 80) || (currentStraightHeading == 0);
-		boolean isProjectionLessThanAverage = currentStraightHeading + Math.abs(realA*Math.tan(convertToRadians(degreesO))) < averageDuration;
-		boolean isCloseDistance = e.getDistance() < 250;
-		boolean isVeryCloseDistance = e.getDistance() < 80;
+		boolean isProjectionLessThanAverage = (currentStraightHeadingTime >= 4) && (currentStraightHeading + Math.abs(realA*Math.tan(convertToRadians(degreesO))) < averageDuration);
+		boolean isClose = e.getDistance() < 250;
+		boolean isVeryClose = e.getDistance() < 100;
+		boolean isLongStraightPath = (currentStraightHeading >= 80) || (currentStraightHeading == 0);
 		boolean isLongCurvedPath = currentCurvedHeading >= 120;
+		boolean isLongStraightTime = currentStraightHeadingTime >= 7;
+		boolean isLongCurvedTime = currentCurvedHeadingTime >= 10;
+		
 		boolean isStopped = e.getVelocity() == 0;
-		boolean isFacingMe = Math.round(shootAngle/3) == 0;
 		boolean remainingEnergy = getEnergy() >= 6;
 		
 		if (remainingEnergy) {
 			if (isDisabled) {
 				setFire(firePower);
 				firePower = 3;
-			} else if ( (isStopped || (isFacingMe && isCloseDistance)) && isLongHeadingDistance) {
-						setFire(firePower);
-						firePower = 3;
+			} else if (isVeryClose) {
+				setFire (firePower);
+				firePower = 3; 
+			} else if (isStopped || isLongStraightTime) {
+					setFire(firePower);
+					firePower = 3;
 			} else if (isProjectionLessThanAverage) {
-					if (e.getDistance() < 70) {
-						setFire(firePower);
-						firePower = 3;
-					} else {
+					if (isClose) {
 						setFire(firePower);
 						firePower = 2;
+					} else {
+						setFire(firePower);
+						firePower = 1;
 					}
-			} else if (isVeryCloseDistance){
-					setFire (firePower);
-					firePower = 3;
 			} else if (isLongCurvedPath) {
-				setFire (firePower);
-				firePower = 0.5;
+				if (isClose) {
+					setFire (firePower);
+					firePower = 1.5;
+				} else {
+					setFire (firePower);
+					firePower = 0.3;
+				}
 			}
 		}
 	
@@ -165,10 +181,11 @@ public class __FeapNEST__ extends AdvancedRobot {
 		/*
 		 * Move
 		 */
-		if(Math.abs(getX()) == 1) {
-			
-		}
-		double angleNeededBody = Utils.normalRelativeAngleDegrees(((actualBearing + 90) - getHeading()) - 25);
+//		if (!isInBounds(getX(), getY(), getBattleFieldWidth(), getBattleFieldHeight(), getWidth() + 20, getHeight() + 20)) {
+//			movementDirection = movementDirection*-1;
+//		}
+		moveInBounds(getX(), getY(), getBattleFieldWidth(), getBattleFieldHeight(), getWidth() + 20, getHeight() + 20);
+		double angleNeededBody = Utils.normalRelativeAngleDegrees(((actualBearing + 90) - getHeading()) - (25*movementDirection));
 		double turnRight;
 		if(angleNeededBody > 0) {
 			turnRight = (Math.min(angleNeededBody, Rules.MAX_TURN_RATE * 1));
@@ -178,7 +195,7 @@ public class __FeapNEST__ extends AdvancedRobot {
 			turnRight = 0;
 		}
 		setTurnRight(turnRight);
-		setAhead(8);
+		setAhead(8 * movementDirection);
 		
 		/*
 		 * Print 
@@ -195,14 +212,19 @@ public class __FeapNEST__ extends AdvancedRobot {
 ////		System.out.println("gun heading" + getGunHeading());
 //		System.out.println("Angle needed" +  angleNeeded );
 //		System.out.println("energy:" + e.getEnergy());
-		System.out.println("is thing true? " + (currentStraightHeading + Math.abs(realA*Math.tan(convertToRadians(degreesO))) < averageDuration));
+		
+//		System.out.println("is thing true? " + (currentStraightHeading + Math.abs(realA*Math.tan(convertToRadians(degreesO))) < averageDuration));
 		System.out.println("firepower: " + firePower);
 		System.out.println("distance: " + e.getDistance());
 		System.out.println("straight distance:" + currentStraightHeading);
 		System.out.println("curved distance: " + currentCurvedHeading);
 //		System.out.println("projected: " + Math.abs(realA*Math.tan(convertToRadians(degreesO))) + " RealA: " + realA + "radians O: " + convertToRadians(degreesO));
 		System.out.println("average duration: " + averageDuration);
-		System.out.println("index: " + durationIndex);
+//		System.out.println("index: " + durationIndex);
+		System.out.println("direction: " + movementDirection);
+		System.out.println("heading: " + getHeading());
+		System.out.println("width: " + getWidth() +" height: " + getHeight());
+		System.out.println("in bounds? " + isInBounds(getX(), getY(), getBattleFieldWidth(), getBattleFieldHeight(), getWidth() + 20, getHeight() + 20));
 		
 		System.out.println();
 		System.out.println("=~=~=~=~=~=~=~=~=~=~=~=~=~=");
@@ -212,6 +234,51 @@ public class __FeapNEST__ extends AdvancedRobot {
 		 */
 		
 		execute();
+	}
+	
+	public void moveInBounds (double x, double y, double fieldWidth, double fieldHeight, double robotWidth, double robotHeight) {
+		boolean boundsRight = !(fieldWidth - x > robotWidth);
+		boolean boundsUp = !(fieldHeight - y > robotHeight);
+		boolean boundsLeft = !(x > robotWidth);
+		boolean boundsDown = !(y > robotHeight);
+		double moveDirection;
+		
+		if (boundsLeft) {
+			System.out.println("left");
+			if (Utils.normalAbsoluteAngleDegrees(getHeading() + 0) >= 180) {
+				movementDirection = -1;
+			} else {
+				movementDirection = 1;
+			}
+		} else if (boundsDown) {
+			System.out.println("down");
+			if (Utils.normalAbsoluteAngleDegrees(getHeading() + 90) >= 180) {
+				movementDirection = -1;
+			} else {
+				movementDirection = 1;
+			}
+		} else if (boundsRight) {
+			System.out.println("right");
+			if (Utils.normalAbsoluteAngleDegrees(getHeading() + 180) >= 180) {
+				movementDirection = -1;
+			} else {
+				movementDirection = 1;
+			}
+		} else if (boundsUp) {
+			System.out.println("up");
+			if (Utils.normalAbsoluteAngleDegrees(getHeading() + 270) >= 180) {
+				movementDirection = -1;
+			} else {
+				movementDirection = 1;
+			}
+		}	
+			
+	}
+	
+	public boolean isInBounds (double x, double y, double fieldWidth, double fieldHeight, double robotWidth, double robotHeight) {
+		boolean inBoundsX = (x > robotWidth) && (fieldWidth - x > robotWidth);
+		boolean inBoundsY = (y > robotHeight) && (fieldHeight - y > robotHeight);
+		return (inBoundsX && inBoundsY);
 	}
 	
 	public double findSign(double number) {
