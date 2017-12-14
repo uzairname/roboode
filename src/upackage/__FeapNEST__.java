@@ -62,7 +62,6 @@ public class __FeapNEST__ extends AdvancedRobot {
 			setBulletColor(new Color(0, 0, 0));
 		}
 		
-		
 		/*
 		 * Shoot angle 
 		 */
@@ -159,18 +158,21 @@ public class __FeapNEST__ extends AdvancedRobot {
 			} else if (isProjectionLessThanAverage) {
 					if (isClose) {
 						setFire(firePower);
-						firePower = 2;
+						firePower = 2.5;
 					} else {
 						setFire(firePower);
-						firePower = 1;
+						firePower = 1.5;
 					}
 			} else if (isLongCurvedPath) {
-				if (isClose) {
+				if (isVeryClose) {
+					setFire (firePower);
+					firePower = 3;
+				} else if (isClose) {
 					setFire (firePower);
 					firePower = 1.5;
 				} else {
 					setFire (firePower);
-					firePower = 0.3;
+					firePower = 0.5;
 				}
 			}
 		}
@@ -185,17 +187,23 @@ public class __FeapNEST__ extends AdvancedRobot {
 //			movementDirection = movementDirection*-1;
 //		}
 		moveInBounds(getX(), getY(), getBattleFieldWidth(), getBattleFieldHeight(), getWidth() + 20, getHeight() + 20);
-		double angleNeededBody = Utils.normalRelativeAngleDegrees(((actualBearing + 90) - getHeading()) - (25*movementDirection));
-		double turnRight;
-		if(angleNeededBody > 0) {
-			turnRight = (Math.min(angleNeededBody, Rules.MAX_TURN_RATE * 1));
-		} else if (angleNeededBody < 0) {
-			turnRight = (Math.max(angleNeededBody, Rules.MAX_TURN_RATE * -1));
-		} else {
-			turnRight = 0;
+		
+		if (isInBounds(getX(), getY(), getBattleFieldWidth(), getBattleFieldHeight(), getWidth() + 29, getHeight() + 29)) {
+			double angleNeededBody = Utils.normalRelativeAngleDegrees(((actualBearing + 90) - getHeading()) - (findIncline(e.getDistance())*movementDirection));
+			double turnRight;
+			if(angleNeededBody > 0) {
+				turnRight = (Math.min(angleNeededBody, Rules.MAX_TURN_RATE * 1));
+			} else if (angleNeededBody < 0) {
+				turnRight = (Math.max(angleNeededBody, Rules.MAX_TURN_RATE * -1));
+			} else {
+				turnRight = 0;
+			}
+			setTurnRight(turnRight);
+			if (getTime() % 100 == 1) {
+				movementDirection = -1*movementDirection;
+			}
 		}
-		setTurnRight(turnRight);
-		setAhead(8 * movementDirection);
+		setAhead(Rules.MAX_VELOCITY * movementDirection);
 		
 		/*
 		 * Print 
@@ -223,7 +231,7 @@ public class __FeapNEST__ extends AdvancedRobot {
 //		System.out.println("index: " + durationIndex);
 		System.out.println("direction: " + movementDirection);
 		System.out.println("heading: " + getHeading());
-		System.out.println("width: " + getWidth() +" height: " + getHeight());
+		System.out.println("incline: " + findIncline(e.getDistance()));
 		System.out.println("in bounds? " + isInBounds(getX(), getY(), getBattleFieldWidth(), getBattleFieldHeight(), getWidth() + 20, getHeight() + 20));
 		
 		System.out.println();
@@ -234,6 +242,14 @@ public class __FeapNEST__ extends AdvancedRobot {
 		 */
 		
 		execute();
+	}
+	
+	public double findIncline (double distance) {
+		if (distance >= 100) {
+			return (-100 * Math.pow(1.003, -1*distance)) + 90;
+		} else {
+			return Math.max((0.79*distance) - 63, 0);
+		}
 	}
 	
 	public void moveInBounds (double x, double y, double fieldWidth, double fieldHeight, double robotWidth, double robotHeight) {
