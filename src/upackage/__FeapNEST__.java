@@ -2,7 +2,6 @@ package upackage;
 import robocode.*;
 import robocode.util.Utils;
 import java.awt.*;
-import java.lang.reflect.Array;
 
 public class __FeapNEST__ extends AdvancedRobot {
 
@@ -67,8 +66,8 @@ public class __FeapNEST__ extends AdvancedRobot {
 		System.out.println("average duration: " + averageDuration);
 		System.out.println("direction: " + movementDirection);
 		System.out.println("heading: " + getHeading());
-		System.out.println("incline: " + findIncline(e.getDistance()));
-		System.out.println("in bounds? " + isInBounds(getX(), getY(), getBattleFieldWidth(), getBattleFieldHeight(), getWidth() + 20, getHeight() + 20));		
+		System.out.println("incline: " + Calc.findIncline(e.getDistance()));
+		System.out.println("in bounds? " + Calc.isInBounds(getX(), getY(), getBattleFieldWidth(), getBattleFieldHeight(), getWidth() + 20, getHeight() + 20));		
 		System.out.println();
 		System.out.println("=~=~=~=~=~=~=~=~=~=~=~=~=~=");
 	}
@@ -79,10 +78,10 @@ public class __FeapNEST__ extends AdvancedRobot {
 	}
 
 	private void move(ScannedRobotEvent e, double actualBearing) {
-		moveInBounds(getX(), getY(), getBattleFieldWidth(), getBattleFieldHeight(), getWidth() + 20, getHeight() + 20);
+		movementDirection = Calc.moveInBounds(movementDirection, getHeading(), getX(), getY(), getBattleFieldWidth(), getBattleFieldHeight(), getWidth() + 20, getHeight() + 20);
 		
-		if (isInBounds(getX(), getY(), getBattleFieldWidth(), getBattleFieldHeight(), getWidth() + 29, getHeight() + 29)) {
-			double angleNeededBody = Utils.normalRelativeAngleDegrees(((actualBearing + 90) - getHeading()) - (findIncline(e.getDistance())*movementDirection));
+		if (Calc.isInBounds(getX(), getY(), getBattleFieldWidth(), getBattleFieldHeight(), getWidth() + 29, getHeight() + 29)) {
+			double angleNeededBody = Utils.normalRelativeAngleDegrees(((actualBearing + 90) - getHeading()) - (Calc.findIncline(e.getDistance())*movementDirection));
 			double turnRight;
 			if(angleNeededBody > 0) {
 				turnRight = (Math.min(angleNeededBody, Rules.MAX_TURN_RATE * 1));
@@ -216,57 +215,11 @@ public class __FeapNEST__ extends AdvancedRobot {
 		}
 	}
 	
-	public double findIncline (double distance) {
-		if (distance >= 120) {
-			return (-100 * Math.pow(1.003, -1*distance)) + 90;
-		} else {
-			return (0.79*distance) - 75;
-		}
-	}
+
 	
-	public void moveInBounds (double x, double y, double fieldWidth, double fieldHeight, double robotWidth, double robotHeight) {
-		boolean boundsRight = !(fieldWidth - x > robotWidth);
-		boolean boundsUp = !(fieldHeight - y > robotHeight);
-		boolean boundsLeft = !(x > robotWidth);
-		boolean boundsDown = !(y > robotHeight);
-		
-		if (boundsLeft) {
-			System.out.println("left");
-			if (Utils.normalAbsoluteAngleDegrees(getHeading() + 0) >= 180) {
-				movementDirection = -1;
-			} else {
-				movementDirection = 1;
-			}
-		} else if (boundsDown) {
-			System.out.println("down");
-			if (Utils.normalAbsoluteAngleDegrees(getHeading() + 90) >= 180) {
-				movementDirection = -1;
-			} else {
-				movementDirection = 1;
-			}
-		} else if (boundsRight) {
-			System.out.println("right");
-			if (Utils.normalAbsoluteAngleDegrees(getHeading() + 180) >= 180) {
-				movementDirection = -1;
-			} else {
-				movementDirection = 1;
-			}
-		} else if (boundsUp) {
-			System.out.println("up");
-			if (Utils.normalAbsoluteAngleDegrees(getHeading() + 270) >= 180) {
-				movementDirection = -1;
-			} else {
-				movementDirection = 1;
-			}
-		}	
-			
-	}
+
 	
-	public boolean isInBounds (double x, double y, double fieldWidth, double fieldHeight, double robotWidth, double robotHeight) {
-		boolean inBoundsX = (x > robotWidth) && (fieldWidth - x > robotWidth);
-		boolean inBoundsY = (y > robotHeight) && (fieldHeight - y > robotHeight);
-		return (inBoundsX && inBoundsY);
-	}
+
 	
 	public double findSign(double number) {
 		if(number > 0) {
