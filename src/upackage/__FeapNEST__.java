@@ -36,11 +36,7 @@ public class __FeapNEST__ extends AdvancedRobot {
 	public void onScannedRobot(ScannedRobotEvent e) {
 
 		colorFlash();
-		
-		/*
-		 * Shoot angle 
-		 */
-
+	
 		double actualBearing = Utils.normalAbsoluteAngleDegrees(e.getBearing() + getHeading());
 		double L = e.getDistance();
 		double v = e.getVelocity();
@@ -50,61 +46,36 @@ public class __FeapNEST__ extends AdvancedRobot {
 		double realA = possibleAs[findA(degreesO)];
 		double absoluteShootAngle = findAbsShootingAngle(actualBearing, L, v, degreesO, realA);
 
-		moveRadar(e, actualBearing);
-				
+		moveRadar(e, actualBearing);		
 		aimGun(absoluteShootAngle);
-		
-		/*
-		 * Gun shoot 
-		 */
-
-		calculateDistances(e);
-		
+		calculateAverageDistances(e);
 		setFirePower(e, degreesO, realA);
-	
-		previousHeading = e.getHeading();
-		previousVelocity = e.getVelocity();
-		
+		setPrevious(e);
 		move(e, actualBearing);
 		
-		/*
-		 * Print 
-		 */
+		print(e);
 		
-		boolean isAim = ((absoluteShootAngle + 2) >= getGunHeading()) && (getGunHeading() >= (absoluteShootAngle - 2));
-		if (isAim) {
-			System.out.println("Aim");
-		} else {
-			System.out.println();
-		}
+		execute();
+	}
+
+	private void print(ScannedRobotEvent e) {
 		System.out.println();
-//		System.out.println("absolute shoot angle: " + absoluteShootAngle);
-//		System.out.println("shoot angle: " + shootAngle + "  actual Bearing: " + actualBearing);
-////		System.out.println("gun heading" + getGunHeading());
-//		System.out.println("Angle needed" +  angleNeeded );
-//		System.out.println("energy:" + e.getEnergy());
-		
-//		System.out.println("is thing true? " + (currentStraightHeading + Math.abs(realA*Math.tan(convertToRadians(degreesO))) < averageDuration));
 		System.out.println("firepower: " + firePower);
 		System.out.println("distance: " + e.getDistance());
 		System.out.println("straight distance:" + currentStraightHeading);
 		System.out.println("curved distance: " + currentCurvedHeading);
-//		System.out.println("projected: " + Math.abs(realA*Math.tan(convertToRadians(degreesO))) + " RealA: " + realA + "radians O: " + convertToRadians(degreesO));
 		System.out.println("average duration: " + averageDuration);
-//		System.out.println("index: " + durationIndex);
 		System.out.println("direction: " + movementDirection);
 		System.out.println("heading: " + getHeading());
 		System.out.println("incline: " + findIncline(e.getDistance()));
-		System.out.println("in bounds? " + isInBounds(getX(), getY(), getBattleFieldWidth(), getBattleFieldHeight(), getWidth() + 20, getHeight() + 20));
-		
+		System.out.println("in bounds? " + isInBounds(getX(), getY(), getBattleFieldWidth(), getBattleFieldHeight(), getWidth() + 20, getHeight() + 20));		
 		System.out.println();
 		System.out.println("=~=~=~=~=~=~=~=~=~=~=~=~=~=");
-		
-		/*
-		 * Execute
-		 */
-		
-		execute();
+	}
+
+	private void setPrevious(ScannedRobotEvent e) {
+		previousHeading = e.getHeading();
+		previousVelocity = e.getVelocity();
 	}
 
 	private void move(ScannedRobotEvent e, double actualBearing) {
@@ -132,7 +103,7 @@ public class __FeapNEST__ extends AdvancedRobot {
 		boolean isDisabled = e.getEnergy() <= 0;
 		boolean isProjectionLessThanAverage = (currentStraightHeadingTime >= 4) && (currentStraightHeading + Math.abs(realA*Math.tan(convertToRadians(degreesO))) < averageDuration);
 		boolean isClose = e.getDistance() < 350;
-		boolean isVeryClose = e.getDistance() < 250;
+		boolean isVeryClose = e.getDistance() < 200;
 		boolean isLongCurvedPath = currentCurvedHeading >= 120;
 		boolean isLongStraightTime = currentStraightHeadingTime >= 7;		
 		boolean isStopped = e.getVelocity() == 0;
@@ -171,7 +142,7 @@ public class __FeapNEST__ extends AdvancedRobot {
 		}
 	}
 
-	private void calculateDistances(ScannedRobotEvent e) {
+	private void calculateAverageDistances(ScannedRobotEvent e) {
 		if((previousHeading == e.getHeading()) && (findSign(previousVelocity) == findSign(e.getVelocity()))) {
 			currentCurvedHeading = 0;
 			currentCurvedHeadingTime = 0;
@@ -209,10 +180,10 @@ public class __FeapNEST__ extends AdvancedRobot {
 		System.out.println("ExtraTurn: " + extraTurn);
 		System.out.println("Initial" + radarInitialTurn);
 		System.out.println("radarTurn: " + radarTurn);
-
+		
 		setTurnRadarRight(radarTurn);
 	}
-
+		
 	private double findAbsShootingAngle(double actualBearing, double L, double v, double degreesO, double realA) {
 		double shootAngle;
 		if (v == 0) {
