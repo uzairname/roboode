@@ -6,9 +6,9 @@ public class Calc {
 	
 	public static double findIncline (double distance) {
 		if (distance >= 170) {
-			return (-135 * Math.pow(1.003, -1*distance)) + 90;
+			return (-165 * Math.pow(1.003, -1*distance)) + 90;
 		} else {
-			return (0.9*distance) - 192;
+			return (0.3*distance) - 62;
 		}
 	}
 	
