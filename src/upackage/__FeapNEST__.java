@@ -201,16 +201,17 @@ public class __FeapNEST__ extends AdvancedRobot {
 		if(getTime() % 6 < 2) {
 			setBodyColor(new Color(255, 200, 100));
 			setGunColor(new Color(0, 0, 255));
-			setRadarColor(new Color(255, 255, 0));
+			setRadarColor(new Color(0, 0, 0));
 			setScanColor(new Color(255, 255, 255));
 			setBulletColor(new Color(0, 0, 0));
 		} else if (getTime() % 6 < 4) {
 			setAllColors(java.awt.Color.BLACK);
+			setScanColor(new Color(255, 255, 255));
 		} else if (getTime() % 6 < 6) {
 			setBodyColor(new Color(150, 20, 0));
 			setGunColor(new Color(255, 200, 0));
-			setRadarColor(new Color(255, 255, 0));
-			setScanColor(new Color(255, 50, 0));
+			setRadarColor(new Color(200, 130, 0));
+			setScanColor(new Color(255, 255, 255));
 			setBulletColor(new Color(0, 0, 0));
 		}
 	}

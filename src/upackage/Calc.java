@@ -5,10 +5,10 @@ import robocode.util.Utils;
 public class Calc {
 	
 	public static double findIncline (double distance) {
-		if (distance >= 120) {
-			return (-100 * Math.pow(1.003, -1*distance)) + 90;
+		if (distance >= 170) {
+			return (-119 * Math.pow(1.003, -1*distance)) + 90;
 		} else {
-			return (0.79*distance) - 75;
+			return (0.5*distance) - 67;
 		}
 	}
 	
