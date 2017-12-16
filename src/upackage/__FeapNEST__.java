@@ -91,7 +91,7 @@ public class __FeapNEST__ extends AdvancedRobot {
 				turnRight = 0;
 			}
 			setTurnRight(turnRight);
-			if (getTime() % 40 == 1) {
+			if (getTime() % e.getDistance() == 1) {
 				movementDirection = -1*movementDirection;
 			}
 		}
@@ -103,16 +103,16 @@ public class __FeapNEST__ extends AdvancedRobot {
 		boolean isProjectionLessThanAverage = (currentStraightHeadingTime >= 4) && (currentStraightHeading + Math.abs(realA*Math.tan(convertToRadians(degreesO))) < averageDuration);
 		boolean isClose = e.getDistance() < 350;
 		boolean isVeryClose = e.getDistance() < 200;
-		boolean isLongCurvedPath = currentCurvedHeading >= 120;
+		boolean isLongCurvedPath = currentCurvedHeading >= 220;
 		boolean isLongStraightTime = currentStraightHeadingTime >= 7;		
 		boolean isStopped = e.getVelocity() == 0;
 		boolean remainingEnergy = getEnergy() >= 6;
 		
-		if (remainingEnergy) {
-			if (isDisabled) {
-				setFire(firePower);
-				firePower = 3;
-			} else if (isVeryClose) {
+		
+		if (isDisabled) {
+			setFire(Math.min(getEnergy()/1.5, 3));
+		} if (remainingEnergy) {
+			if (isVeryClose) {
 				setFire (firePower);
 				firePower = 3; 
 			} else if (isStopped || isLongStraightTime) {
@@ -121,18 +121,15 @@ public class __FeapNEST__ extends AdvancedRobot {
 			} else if (isProjectionLessThanAverage) {
 					if (isClose) {
 						setFire(firePower);
-						firePower = 2.5;
+						firePower = 3;
 					} else {
 						setFire(firePower);
 						firePower = 1.5;
 					}
 			} else if (isLongCurvedPath) {
-				if (isVeryClose) {
+				if (isClose) {
 					setFire (firePower);
-					firePower = 3;
-				} else if (isClose) {
-					setFire (firePower);
-					firePower = 2;
+					firePower = 1.5;
 				} else {
 					setFire (firePower);
 					firePower = 0.5;
