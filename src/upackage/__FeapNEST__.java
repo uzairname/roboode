@@ -2,6 +2,7 @@ package upackage;
 import robocode.*;
 import robocode.util.Utils;
 import java.awt.*;
+import static upackage.Colors.*;
 
 public class __FeapNEST__ extends AdvancedRobot {
 
@@ -191,26 +192,20 @@ public class __FeapNEST__ extends AdvancedRobot {
 	}
 
 	private void colorFlash() {
-
-		if(getTime() % 6 < 2) {
-			setBodyColor  (new Color(255, 200, 100));
-			setGunColor   (new Color(0, 0, 255));
-			setRadarColor (new Color(0, 0, 0));
-			setScanColor  (new Color(255, 255, 255));
-			setBulletColor(new Color(0, 0, 0));
-		} else if (getTime() % 6 < 4) {
-			setBodyColor  (new Color(255, 200, 100));
-			setGunColor   (new Color(0, 0, 255));
-			setRadarColor (new Color(0, 0, 0));
-			setScanColor  (new Color(255, 255, 255));
-			setBulletColor(new Color(0, 0, 0));
-		} else if (getTime() % 6 < 6) {
-			setBodyColor  (new Color(150, 20, 0));
-			setGunColor   (new Color(255, 200, 0));
-			setRadarColor (new Color(200, 130, 0));
-			setScanColor  (new Color(255, 255, 255));
-			setBulletColor(new Color(0, 0, 0));
+		long time = getTime();
+		if(time % 6 < 2) {
+			setBodyColor  (makeColor(5, time));
+			setGunColor   (makeColor(3, time));
+			setRadarColor (makeColor(6, time + 12));
+		} else if (time % 6 < 4) {
+			setAllColors(BLACK);
+		} else if (time % 6 < 6) {
+			setBodyColor  (makeColor(7, time));
+			setGunColor   (makeColor(6, time));
+			setRadarColor (makeColor(6, time + 12));
 		}
+		setScanColor  (WHITE);
+		setBulletColor(BLACK);
 	}
 	
 
@@ -238,13 +233,12 @@ public class __FeapNEST__ extends AdvancedRobot {
 	}
 
 	private double findO(double Bearing, double Heading, double Velocity) {
-		if (Velocity >= 0) {
+		
+		if (Velocity > 0) {
 			return Utils.normalAbsoluteAngleDegrees(Bearing - Heading);
-		} else if (Velocity <= 0) {
-			return Utils.normalAbsoluteAngleDegrees((Bearing - Heading) + 180);
 		} else {
-			return 0;
-		}
+			return Utils.normalAbsoluteAngleDegrees((Bearing - Heading) + 180);
+		} 
 	}
 
 	private double[] findPossibleA(double O, double L, double v, double s) {
