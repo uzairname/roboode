@@ -39,7 +39,7 @@ public class __FeapNEST__ extends AdvancedRobot {
 
 	public void onScannedRobot(ScannedRobotEvent e) {
 
-		colorFlash();
+		Colors.colorFlash(this);
 	
 		double actualBearing = Utils.normalAbsoluteAngleDegrees(e.getBearing() + getHeading());
 		double L = e.getDistance();
@@ -195,28 +195,7 @@ public class __FeapNEST__ extends AdvancedRobot {
 		return shootAngle + actualBearing;
 	}
 
-	private void colorFlash() {
-		long time = getTime();
 	
-		Consumer<Integer> bodyColor = c -> setBodyColor(makeColor(c, time));
-		Consumer<Integer> gunColor = c -> setGunColor(makeColor(c, time));
-		Consumer<Integer> radarColor = c -> setRadarColor(makeColor(c, time));
-		
-		
-		if(time % 6 < 2) {
-			bodyColor.accept(5);
-			gunColor.accept(3);
-			radarColor.accept(6);
-		} else if (time % 6 < 4) {
-			setAllColors(BLACK);
-		} else if (time % 6 < 6) {
-			bodyColor.accept(7);
-			gunColor.accept(6);
-			radarColor.accept(6);
-		}
-		setScanColor  (WHITE);
-		setBulletColor(BLACK);
-	}
 	
 
 	
