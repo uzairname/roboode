@@ -4,15 +4,11 @@ import robocode.util.Utils;
 
 public class Calc {
 	
-	public static int [] colorRatios (double turn) {
+	public static double [] colorRatios (double turn) {
 		double red   = Math.min(8, Math.abs( ((turn +  8) % 24) - 12));
 		double green = Math.min(8, Math.abs( ((turn + 16) % 24) - 12));
 		double blue  = Math.min(8, Math.abs( ((turn + 24) % 24) - 12));
-		
-//		red = Math.min(red*32, 255);
-//		blue = Math.min(blue * 32, 255);
-//		green = Math.min(green * 32, 255);
-		return  new int [] {(int)red, (int)blue, (int)green};
+		return  new double [] {red, blue, green};
 	}
 	
 	public static double findIncline (double distance) {
