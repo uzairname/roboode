@@ -1,8 +1,12 @@
 package upackage;
-import robocode.*;
-import robocode.util.Utils;
-import java.awt.*;
 import static upackage.Colors.*;
+
+import java.util.function.Consumer;
+
+import robocode.AdvancedRobot;
+import robocode.Rules;
+import robocode.ScannedRobotEvent;
+import robocode.util.Utils;
 
 public class __FeapNEST__ extends AdvancedRobot {
 
@@ -193,16 +197,22 @@ public class __FeapNEST__ extends AdvancedRobot {
 
 	private void colorFlash() {
 		long time = getTime();
+	
+		Consumer<Integer> bodyColor = c -> setBodyColor(makeColor(c, time));
+		Consumer<Integer> gunColor = c -> setGunColor(makeColor(c, time));
+		Consumer<Integer> radarColor = c -> setRadarColor(makeColor(c, time));
+		
+		
 		if(time % 6 < 2) {
-			setBodyColor  (makeColor(5, time));
-			setGunColor   (makeColor(3, time));
-			setRadarColor (makeColor(6, time + 12));
+			bodyColor.accept(5);
+			gunColor.accept(3);
+			radarColor.accept(6);
 		} else if (time % 6 < 4) {
 			setAllColors(BLACK);
 		} else if (time % 6 < 6) {
-			setBodyColor  (makeColor(7, time));
-			setGunColor   (makeColor(6, time));
-			setRadarColor (makeColor(6, time + 12));
+			bodyColor.accept(7);
+			gunColor.accept(6);
+			radarColor.accept(6);
 		}
 		setScanColor  (WHITE);
 		setBulletColor(BLACK);
