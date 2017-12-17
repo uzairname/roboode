@@ -191,26 +191,31 @@ public class __FeapNEST__ extends AdvancedRobot {
 	}
 
 	private void colorFlash() {
-
+		int r = Calc.colorRatios(getTime())[0];
+		int g = Calc.colorRatios(getTime())[1];
+		int b = Calc.colorRatios(getTime())[2];
+		
+		int mr = (r*8)-1;
+		int mg = (g*8)-1;
+		int mb = (b*8)-1;
+		
+		Color maxSaturation = new Color(mr, mg, mb);
 		if(getTime() % 6 < 2) {
-			setBodyColor  (new Color(255, 200, 100));
-			setGunColor   (new Color(0, 0, 255));
-			setRadarColor (new Color(0, 0, 0));
-			setScanColor  (new Color(255, 255, 255));
-			setBulletColor(new Color(0, 0, 0));
+			setBodyColor  (new Color(r*2, g*2, b*0));
+			setGunColor   (new Color(r*3, g*3, b*3));
+			setRadarColor (maxSaturation);
 		} else if (getTime() % 6 < 4) {
-			setBodyColor  (new Color(255, 200, 100));
-			setGunColor   (new Color(0, 0, 255));
-			setRadarColor (new Color(0, 0, 0));
-			setScanColor  (new Color(255, 255, 255));
-			setBulletColor(new Color(0, 0, 0));
+			setBodyColor  (new Color(r*0, g*0, b*0));
+			setGunColor   (new Color(r*0, g*0, b*0));
+			setRadarColor (maxSaturation);
+
 		} else if (getTime() % 6 < 6) {
-			setBodyColor  (new Color(150, 20, 0));
-			setGunColor   (new Color(255, 200, 0));
-			setRadarColor (new Color(200, 130, 0));
-			setScanColor  (new Color(255, 255, 255));
-			setBulletColor(new Color(0, 0, 0));
+			setBodyColor  (new Color(r*7, g*7, b*0));
+			setGunColor   (maxSaturation);
+			setRadarColor (new Color(255, 255, 255));
 		}
+		setBulletColor(new Color(r*0, g*0, b*0));
+		setScanColor(maxSaturation);
 	}
 	
 
