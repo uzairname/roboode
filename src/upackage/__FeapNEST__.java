@@ -1,8 +1,4 @@
 package upackage;
-import static upackage.Colors.*;
-
-import java.util.function.Consumer;
-
 import robocode.AdvancedRobot;
 import robocode.Rules;
 import robocode.ScannedRobotEvent;
@@ -55,7 +51,8 @@ public class __FeapNEST__ extends AdvancedRobot {
 		calculateAverageDistances(e);
 		setFirePower(e, degreesO, realA);
 		setPrevious(e);
-		move(e, actualBearing);
+		movementDirection = DirectionCalculator.calcDirection(e, movementDirection, this);
+		setAhead(Rules.MAX_VELOCITY * movementDirection);
 		
 		print(e);
 		
@@ -71,8 +68,6 @@ public class __FeapNEST__ extends AdvancedRobot {
 		System.out.println("average duration: " + averageDuration);
 		System.out.println("direction: " + movementDirection);
 		System.out.println("heading: " + getHeading());
-		System.out.println("incline: " + Calc.findIncline(e.getDistance()));
-		System.out.println("in bounds? " + Calc.isInBounds(getX(), getY(), getBattleFieldWidth(), getBattleFieldHeight(), getWidth() + 20, getHeight() + 20));		
 		System.out.println();
 		System.out.println("=~=~=~=~=~=~=~=~=~=~=~=~=~=");
 	}
@@ -82,26 +77,6 @@ public class __FeapNEST__ extends AdvancedRobot {
 		previousVelocity = e.getVelocity();
 	}
 
-	private void move(ScannedRobotEvent e, double actualBearing) {
-		movementDirection = Calc.moveInBounds(movementDirection, getHeading(), getX(), getY(), getBattleFieldWidth(), getBattleFieldHeight(), getWidth() + 20, getHeight() + 20);
-		
-		if (Calc.isInBounds(getX(), getY(), getBattleFieldWidth(), getBattleFieldHeight(), getWidth() + 29, getHeight() + 29)) {
-			double angleNeededBody = Utils.normalRelativeAngleDegrees(((actualBearing + 90) - getHeading()) - (Calc.findIncline(e.getDistance())*movementDirection));
-			double turnRight;
-			if(angleNeededBody > 0) {
-				turnRight = (Math.min(angleNeededBody, Rules.MAX_TURN_RATE * 1));
-			} else if (angleNeededBody < 0) {
-				turnRight = (Math.max(angleNeededBody, Rules.MAX_TURN_RATE * -1));
-			} else {
-				turnRight = 0;
-			}
-			setTurnRight(turnRight);
-			if (getTime() % e.getDistance() == 1) {
-				movementDirection = -1*movementDirection;
-			}
-		}
-		setAhead(Rules.MAX_VELOCITY * movementDirection);
-	}
 
 	private void setFirePower(ScannedRobotEvent e, double degreesO, double realA) {
 		boolean isDisabled = e.getEnergy() <= 0;
