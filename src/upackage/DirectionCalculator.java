@@ -12,7 +12,7 @@ public class DirectionCalculator {
 	public static double calcDirection(ScannedRobotEvent e, double currentMovementDirection, AdvancedRobot robot) {
 		double movementDirection = moveInBounds(currentMovementDirection, robot);
 		double actualBearing = Utils.normalAbsoluteAngleDegrees(e.getBearing() + robot.getHeading());
-		if (isInBounds(robot.getX(), robot.getY(), robot.getBattleFieldWidth(), robot.getBattleFieldHeight(), robot.getWidth() + 29, robot.getHeight() + 29)) {
+		if (isInBounds(robot)) {
 			double angleNeededBody = Utils.normalRelativeAngleDegrees(((actualBearing + 90) - robot.getHeading()) - (findIncline(e.getDistance())*movementDirection));
 			double turnRight;
 			if(angleNeededBody > 0) {
@@ -38,8 +38,11 @@ public class DirectionCalculator {
 		}
 	}
 	
-	private static boolean isInBounds (double x, double y, double fieldWidth, double fieldHeight, double robotWidth, double robotHeight) {
-		return (x > robotWidth) && (fieldWidth - x > robotWidth) && (y > robotHeight) && (fieldHeight - y > robotHeight);
+	private static boolean isInBounds (Robot robot) {
+		return (robot.getX() > robot.getWidth() + 20)
+			&& (robot.getBattleFieldWidth() - robot.getX() > robot.getWidth() + 20)
+			&& (robot.getY() > robot.getHeight() + 20)
+			&& (robot.getBattleFieldHeight() - robot.getHeight() > robot.getHeight() + 20);
 	}
 	
 
