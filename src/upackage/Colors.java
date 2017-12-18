@@ -46,6 +46,7 @@ public class Colors {
 	}
 	
 	private static int [] colorRatios (double turn) {
+		turn /= 15;
 		
 		int red   = (int)Math.min(8, Math.abs( ((turn +  8) % 24) - 12));
 		int green = (int)Math.min(8, Math.abs( ((turn + 16) % 24) - 12));
