@@ -52,7 +52,7 @@ public class __FeapNEST__ extends AdvancedRobot {
 		setFirePower(e, degreesO, realA);
 		setPrevious(e);
 		movementDirection = DirectionCalculator.calcDirection(e, movementDirection, this);
-		setAhead(Rules.MAX_VELOCITY * movementDirection);
+		setAhead(32 * movementDirection);
 		
 		print(e);
 		
