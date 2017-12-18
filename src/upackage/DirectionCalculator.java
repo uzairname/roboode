@@ -1,5 +1,7 @@
 package upackage;
 
+import java.util.function.Function;
+
 import robocode.AdvancedRobot;
 import robocode.Robot;
 import robocode.Rules;
@@ -8,6 +10,9 @@ import robocode.util.Utils;
 
 public class DirectionCalculator {
 	
+
+	private static final int BOUNDARY_BUFFER = 20;
+
 
 	public static double calcDirection(ScannedRobotEvent e, double currentMovementDirection, AdvancedRobot robot) {
 		double movementDirection = moveInBounds(currentMovementDirection, robot);
@@ -39,57 +44,44 @@ public class DirectionCalculator {
 	}
 	
 	private static boolean isInBounds (Robot robot) {
-		return (robot.getX() > robot.getWidth() + 20)
-			&& (robot.getBattleFieldWidth() - robot.getX() > robot.getWidth() + 20)
-			&& (robot.getY() > robot.getHeight() + 20)
-			&& (robot.getBattleFieldHeight() - robot.getHeight() > robot.getHeight() + 20);
+		return (robot.getX() > robot.getWidth() + BOUNDARY_BUFFER)
+			&& (robot.getBattleFieldWidth() - robot.getX() > robot.getWidth() + BOUNDARY_BUFFER)
+			&& (robot.getY() > robot.getHeight() + BOUNDARY_BUFFER)
+			&& (robot.getBattleFieldHeight() - robot.getHeight() > robot.getHeight() + BOUNDARY_BUFFER);
 	}
 	
 
-	private static double moveInBounds (double movementDir, Robot robot) {
+	private static double moveInBounds (double currentDirection, Robot robot) {
 		double heading = robot.getHeading();
 		double x = robot.getX();
 		double y = robot.getY();
 		double fieldWidth = robot.getBattleFieldWidth();
 		double fieldHeight = robot.getBattleFieldHeight();
-		double robotWidth = robot.getWidth() + 20;
-		double robotHeight = robot.getHeight() + 20;
+		double robotWidth = robot.getWidth() + BOUNDARY_BUFFER;
+		double robotHeight = robot.getHeight() + BOUNDARY_BUFFER;
 		boolean boundsRight = !(fieldWidth - x > robotWidth);
 		boolean boundsUp = !(fieldHeight - y > robotHeight);
 		boolean boundsLeft = !(x > robotWidth);
 		boolean boundsDown = !(y > robotHeight);
 		
+		Function<Integer, Double> degrees = degree -> {
+			if (Utils.normalAbsoluteAngleDegrees(heading + degree) >= 180) {
+				return -1.0;
+			} else {
+				return 1.0;
+			}
+		};
+		
 		if (boundsLeft) {
-			System.out.println("left");
-			if (Utils.normalAbsoluteAngleDegrees(heading + 0) >= 180) {
-				return -1;
-			} else {
-				return 1;
-			}
+			return degrees.apply(0);
 		} else if (boundsDown) {
-			System.out.println("down");
-			if (Utils.normalAbsoluteAngleDegrees(heading + 90) >= 180) {
-				return -1;
-			} else {
-				return 1;
-			}
+			return degrees.apply(90);
 		} else if (boundsRight) {
-			System.out.println("right");
-			if (Utils.normalAbsoluteAngleDegrees(heading + 180) >= 180) {
-				return -1;
-			} else {
-				return 1;
-			}
+			return degrees.apply(180);
 		} else if (boundsUp) {
-			System.out.println("up");
-			if (Utils.normalAbsoluteAngleDegrees(heading + 270) >= 180) {
-				return -1;
-			} else {
-				return 1;
-			}
+			return degrees.apply(270);
 		} else {
-			return movementDir;
+			return currentDirection;
 		}
 	}
-	
 }
